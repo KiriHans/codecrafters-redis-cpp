@@ -54,20 +54,23 @@ int main(int argc, char **argv)
 
   std::cout << "Waiting for a client to connect...\n";
 
+
+
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
   int sent_fd = 0;
-
+  char buffer[1024];
 
   if (client_fd != 0)
   {
     std::cout << "Client connected\n";
 
     std::string write_string = "+PONG\r\n";
-
-    while (true)
+    
+    while (read(client_fd, buffer, sizeof(buffer) - 1) > 0)
     {
-      sent_fd = write(client_fd, write_string.c_str(), strlen(write_string.c_str()));
-
+      int size_string = strlen(write_string.c_str());
+      sent_fd = write(client_fd, write_string.c_str(), size_string);
+      
       if(sent_fd == -1){
         break;
       }
