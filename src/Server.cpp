@@ -54,34 +54,16 @@ int main(int argc, char **argv)
 
   std::cout << "Waiting for a client to connect...\n";
 
-  accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
-  std::cout << "Client connected\n";
-  
+  int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
 
-  char buffer[1024];
-  int bytesRead = recv(server_fd, buffer, sizeof(buffer), 0);
-
-  if (bytesRead == -1)
+  if (client_fd != 0)
   {
-    std::cerr << "Error al recibir datos" << std::endl;
-    close(server_fd);
-    return 1;
+    std::cout << "Client connected\n";
+    char wbuf[] = "+PONG\r\n";
+
+    send(client_fd, wbuf, strlen(wbuf), MSG_CONFIRM);
   }
-  // int valread = recv(server_fd, buffer, sizeof(buffer), 0);
 
-  // if (valread < 0)
-  // {
-  //   std::cerr << "Something went wrong!\n";
-  // }
-
-  std::cout << buffer << std::endl;
-
-  send(server_fd, "+PONG\r\n", 8, 0);
-
-  //  if (valread < 0)
-  // {
-  //   std::cerr << "Something went wrong!\n";
-  // }
 
   close(server_fd);
 
