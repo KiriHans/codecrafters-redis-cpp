@@ -57,14 +57,20 @@ int main(int argc, char **argv)
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
   int sent_fd = 0;
 
+
   if (client_fd != 0)
   {
     std::cout << "Client connected\n";
-    char wbuf[] = "+PONG\r\n";
 
-    while (sent_fd != -1)
+    std::string write_string = "+PONG\r\n";
+
+    while (true)
     {
-      sent_fd = send(client_fd, wbuf, strlen(wbuf), MSG_CONFIRM);
+      sent_fd = write(client_fd, write_string.c_str(), strlen(write_string.c_str()));
+
+      if(sent_fd == -1){
+        break;
+      }
     };
   }
 
