@@ -55,15 +55,18 @@ int main(int argc, char **argv)
   std::cout << "Waiting for a client to connect...\n";
 
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
+  int sent_fd = -1;
 
   if (client_fd != 0)
   {
     std::cout << "Client connected\n";
-    char wbuf[] = "+PONG\r\n";
+    do
+    {
+      char wbuf[] = "+PONG\r\n";
 
-    send(client_fd, wbuf, strlen(wbuf), MSG_CONFIRM);
+      sent_fd = send(client_fd, wbuf, strlen(wbuf), MSG_CONFIRM);
+    } while (sent_fd != -1);
   }
-
 
   close(server_fd);
 
