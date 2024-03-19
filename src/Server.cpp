@@ -51,6 +51,15 @@ int main(int argc, char **argv) {
   
   accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
+
+
+  if (write(server_fd, "+PONG\r\n", 8) < 0)
+  {
+    std::cerr << "Something went wrong!\n";
+  }
+
+
+  
   
   close(server_fd);
 
