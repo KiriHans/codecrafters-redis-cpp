@@ -111,6 +111,9 @@ int main(int argc, char **argv)
   while (true)
   {
     int num_fd = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+    if(num_fd == -1){
+      break;
+    }
     for (size_t n = 0; n < num_fd; n++)
     {
       if (events[n].data.fd == server_fd)
