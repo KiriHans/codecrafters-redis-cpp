@@ -15,18 +15,24 @@
 const int MAX_EVENTS = 10;
 const int BUFF_SIZE = 1024;
 
-void handle_client(int client_fd)
+bool handle_client(int client_fd, int epoll_fd)
 {
   char buffer[BUFF_SIZE];
   ssize_t read_client_bytes = read(client_fd, buffer, BUFF_SIZE - 1);
   if (read_client_bytes <= 0)
   {
     std::cerr << "An error has ocurred" << std::endl;
+
+    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+    close(client_fd);
+    return false;
   }
 
   std::string write_string = "+PONG\r\n";
   int size_string = strlen(write_string.c_str());
   auto sent_fd = write(client_fd, write_string.c_str(), size_string);
+
+  return true;
 }
 
 int main(int argc, char **argv)
@@ -133,7 +139,7 @@ int main(int argc, char **argv)
           continue;
         }
       } else {
-        handle_client(events[n].data.fd);
+        handle_client(events[n].data.fd, epoll_fd);
       }
     }
   }
