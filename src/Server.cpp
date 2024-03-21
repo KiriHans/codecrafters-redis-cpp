@@ -1,7 +1,13 @@
 #include <iostream>
 #include <cstdlib>
+
 #include <string>
 #include <cstring>
+#include <cctype>
+#include <algorithm>
+
+#include <tuple>
+
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -12,6 +18,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "RedisParser.cpp"
+
 const int MAX_EVENTS = 10;
 const int BUFF_SIZE = 1024;
 
@@ -19,6 +27,12 @@ bool handle_client(int client_fd, int epoll_fd)
 {
   char buffer[BUFF_SIZE];
   ssize_t read_client_bytes = read(client_fd, buffer, BUFF_SIZE - 1);
+
+  std::string str(buffer);
+
+  // std::cout << str << " - "  << "count" << std::endl;
+  auto [count, message] = RedisParser::parse(str);
+
   if (read_client_bytes <= 0)
   {
     std::cerr << "An error has ocurred" << std::endl;
@@ -28,9 +42,23 @@ bool handle_client(int client_fd, int epoll_fd)
     return false;
   }
 
-  std::string write_string = "+PONG\r\n";
-  int size_string = strlen(write_string.c_str());
-  auto sent_fd = write(client_fd, write_string.c_str(), size_string);
+  std::string command_client = message.array[0];
+
+  std::transform(command_client.begin(), command_client.end(), command_client.begin(), ::toupper);
+  if (command_client == "PING")
+  {
+    std::string write_string = "+PONG\r\n";
+    int size_string = write_string.size();
+    auto sent_fd = write(client_fd, write_string.c_str(), size_string);
+  }
+  else if (command_client == "ECHO")
+  {
+    std::string echo_message = message.array[1];
+    std::string write_string = "$" + std::to_string(echo_message.size()) + "\r\n" + echo_message + "\r\n";
+
+    int size_string = write_string.size();
+    auto sent_fd = write(client_fd, write_string.c_str(), size_string);
+  }
 
   return true;
 }
@@ -113,11 +141,10 @@ int main(int argc, char **argv)
     close(epoll_fd);
     return 1;
   }
-
-  while (true)
+  bool running = true;
+  while (running)
   {
     int num_fd = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-    std::cout << "Test" << std::endl;
     for (size_t n = 0; n < num_fd; n++)
     {
       if (events[n].data.fd == server_fd)
@@ -138,8 +165,10 @@ int main(int argc, char **argv)
           close(client_fd);
           continue;
         }
-      } else {
-        handle_client(events[n].data.fd, epoll_fd);
+      }
+      else
+      {
+        running = handle_client(events[n].data.fd, epoll_fd);
       }
     }
   }
