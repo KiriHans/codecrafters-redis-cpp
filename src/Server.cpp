@@ -37,10 +37,10 @@ bool handle_client(int client_fd, int epoll_fd)
   {
     if(read_client_bytes == 0){
       std::cerr << "Client closed the connection" << std::endl;
+    } else{
+      std::cerr << "An error has ocurred" << std::endl;
 
     }
-    std::cerr << "An error has ocurred" << std::endl;
-
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
     close(client_fd);
     return false;
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  int connection_backlog = 5;
+  int connection_backlog = 10;
   if (listen(server_fd, connection_backlog) != 0)
   {
     std::cerr << "listen failed\n";
