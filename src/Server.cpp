@@ -21,7 +21,7 @@
 #include "RedisParser.cpp"
 
 const int MAX_EVENTS = 10;
-const int BUFF_SIZE = 1024;
+const int BUFF_SIZE = 2048;
 
 bool handle_client(int client_fd, int epoll_fd)
 {
@@ -30,39 +30,40 @@ bool handle_client(int client_fd, int epoll_fd)
 
   std::string str(buffer);
 
-  // std::cout << str << " - "  << "count" << std::endl;
-  auto [count, message] = RedisParser::parse(str);
-
   if (read_client_bytes <= 0)
   {
-    if(read_client_bytes == 0){
+    if (read_client_bytes == 0)
+    {
       std::cerr << "Client closed the connection" << std::endl;
-    } else{
+    }
+    else
+    {
       std::cerr << "An error has ocurred" << std::endl;
-
     }
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
     close(client_fd);
     return false;
   }
+  auto [count, message] = RedisParser::parse(str);
 
   std::string command_client = message.array[0];
 
   std::transform(command_client.begin(), command_client.end(), command_client.begin(), ::toupper);
-  if (command_client == "PING")
-  {
-    std::string write_string = "+PONG\r\n";
-    int size_string = write_string.size();
-    auto sent_fd = write(client_fd, write_string.c_str(), size_string);
-  }
-  else if (command_client == "ECHO")
+
+  std::string write_string = "";
+
+  if (command_client == "ECHO")
   {
     std::string echo_message = message.array[1];
     std::string write_string = "$" + std::to_string(echo_message.size()) + "\r\n" + echo_message + "\r\n";
-
-    int size_string = write_string.size();
-    auto sent_fd = write(client_fd, write_string.c_str(), size_string);
   }
+  else
+  {
+    write_string = "+PONG\r\n";
+  }
+
+  int size_string = write_string.size();
+  auto sent_fd = write(client_fd, write_string.c_str(), size_string);
 
   return true;
 }
