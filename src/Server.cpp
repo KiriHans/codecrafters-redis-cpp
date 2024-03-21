@@ -146,8 +146,8 @@ int main(int argc, char **argv)
     close(epoll_fd);
     return 1;
   }
-  bool running = true;
-  while (running)
+  // bool running = true;
+  while (true)
   {
     int num_fd = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
     for (size_t n = 0; n < num_fd; n++)
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
       }
       else
       {
-        running = handle_client(events[n].data.fd, epoll_fd);
+        handle_client(events[n].data.fd, epoll_fd);
       }
     }
   }
