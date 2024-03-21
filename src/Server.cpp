@@ -56,7 +56,7 @@ bool handle_client(int client_fd, int epoll_fd)
   {
     std::string echo_message = message.array[1];
     std::cout << "sdasd " << echo_message << std:: endl; 
-    std::string write_string = "$" + std::to_string(echo_message.size()) + "\r\n" + echo_message + "\r\n";
+    write_string = "$" + std::to_string(echo_message.size()) + "\r\n" + echo_message + "\r\n";
   }
   else
   {
