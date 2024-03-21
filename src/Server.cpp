@@ -35,6 +35,10 @@ bool handle_client(int client_fd, int epoll_fd)
 
   if (read_client_bytes <= 0)
   {
+    if(read_client_bytes == 0){
+      std::cerr << "Client closed the connection" << std::endl;
+
+    }
     std::cerr << "An error has ocurred" << std::endl;
 
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
