@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 struct RESPBulkString
 {
@@ -49,6 +50,8 @@ class RedisParser
     }
 
 public:
+    static std::unordered_map<std::string, std::string> store;
+
     static std::tuple<size_t, RESP> parse(const std::string_view &message, RESP parsed_message = {})
     {
         char message_type = message[0];

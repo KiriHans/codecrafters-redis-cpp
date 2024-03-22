@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include <tuple>
+#include <unordered_map>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -22,6 +23,7 @@
 
 const int MAX_EVENTS = 10;
 const int BUFF_SIZE = 2048;
+std::unordered_map<std::string, std::string> RedisParser::store = {};
 
 bool handle_client(int client_fd, int epoll_fd)
 {
@@ -55,8 +57,25 @@ bool handle_client(int client_fd, int epoll_fd)
   if (command_client == "ECHO")
   {
     std::string echo_message = message.array[1];
-    std::cout << "sdasd " << echo_message << std:: endl; 
+
     write_string = "$" + std::to_string(echo_message.size()) + "\r\n" + echo_message + "\r\n";
+  }
+  else if (command_client == "SET")
+  {
+    RedisParser::store[message.array[1]] = message.array[2];
+    write_string = "+OK\r\n";
+  }
+  else if (command_client == "GET")
+  {
+    if (auto search = RedisParser::store.find(message.array[1]); search == RedisParser::store.end())
+    {
+      write_string = "$-1\r\n";
+    }
+    else
+    {
+      std::string result_store = RedisParser::store[message.array[1]];
+      write_string = write_string = "$" + std::to_string(result_store.size()) + "\r\n" + result_store + "\r\n";
+    }
   }
   else
   {
