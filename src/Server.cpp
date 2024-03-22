@@ -6,6 +6,8 @@
 #include <cctype>
 #include <algorithm>
 
+#include <chrono>
+
 #include <tuple>
 #include <unordered_map>
 
@@ -24,6 +26,7 @@
 const int MAX_EVENTS = 10;
 const int BUFF_SIZE = 2048;
 std::unordered_map<std::string, std::string> RedisParser::store = {};
+std::unordered_map<std::string, std::chrono::steady_clock::time_point> RedisParser::expireKeys = {};
 
 bool handle_client(int client_fd, int epoll_fd)
 {
@@ -62,18 +65,37 @@ bool handle_client(int client_fd, int epoll_fd)
   }
   else if (command_client == "SET")
   {
-    RedisParser::store[message.array[1]] = message.array[2];
+    std::string key = message.array[1];
+    RedisParser::store[key] = message.array[2];
+    
+
+    if (message.array.size() > 4)
+    {  
+      auto expire_ms = std::chrono::milliseconds(std::stoi(message.array[4]));
+      RedisParser::expireKeys[key] = std::chrono::steady_clock::now() + expire_ms;
+    }
     write_string = "+OK\r\n";
   }
   else if (command_client == "GET")
   {
-    if (auto search = RedisParser::store.find(message.array[1]); search == RedisParser::store.end())
+    std::string key = message.array[1];
+    auto expire_ms = RedisParser::expireKeys.find(key);
+
+
+    if (auto search = RedisParser::store.find(key); search == RedisParser::store.end())
     {
       write_string = "$-1\r\n";
     }
+    else if (expire_ms != RedisParser::expireKeys.end() && std::chrono::steady_clock::now() > RedisParser::expireKeys[key])
+    {
+      write_string = "$-1\r\n";
+
+      RedisParser::store.erase(key);
+      RedisParser::expireKeys.erase(key);
+    }
     else
     {
-      std::string result_store = RedisParser::store[message.array[1]];
+      std::string result_store = RedisParser::store[key];
       write_string = write_string = "$" + std::to_string(result_store.size()) + "\r\n" + result_store + "\r\n";
     }
   }

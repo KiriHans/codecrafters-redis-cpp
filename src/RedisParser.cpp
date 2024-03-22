@@ -4,6 +4,9 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <chrono>
+
+
 struct RESPBulkString
 {
     std::string value;
@@ -51,6 +54,7 @@ class RedisParser
 
 public:
     static std::unordered_map<std::string, std::string> store;
+    static std::unordered_map<std::string, std::chrono::steady_clock::time_point> expireKeys;
 
     static std::tuple<size_t, RESP> parse(const std::string_view &message, RESP parsed_message = {})
     {
